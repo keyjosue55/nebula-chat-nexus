@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Send, Image, Plus, Check } from 'lucide-react';
+import { Search, Send, Image, Plus, Check, Phone } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
