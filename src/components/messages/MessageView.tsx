@@ -10,7 +10,7 @@ interface Message {
   senderId: number;
   content: string;
   timestamp: string;
-  isRead: boolean;
+  status: 'sending' | 'sent' | 'delivered' | 'read';
 }
 
 interface Conversation {
@@ -66,6 +66,15 @@ const MessageView = ({
               />
             );
           })}
+          
+          {conversation.typing && (
+            <div className="flex items-center text-neon-blue text-sm ml-12">
+              <span className="animate-pulse">En train d'écrire</span>
+              <span className="animate-pulse delay-100">.</span>
+              <span className="animate-pulse delay-200">.</span>
+              <span className="animate-pulse delay-300">.</span>
+            </div>
+          )}
         </div>
       </ScrollArea>
       

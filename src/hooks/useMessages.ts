@@ -6,7 +6,7 @@ interface Message {
   senderId: number;
   content: string;
   timestamp: string;
-  isRead: boolean;
+  status: 'sending' | 'sent' | 'delivered' | 'read';
 }
 
 interface Conversation {
@@ -83,22 +83,22 @@ export const useMessages = () => {
     // Simuler le chargement des messages pour chaque conversation
     const demoMessages: Record<number, Message[]> = {
       1: [
-        { id: 1, senderId: 101, content: "Salut! Comment ça va aujourd'hui?", timestamp: "10:15", isRead: true },
-        { id: 2, senderId: 0, content: "Ça va bien, merci! Et toi?", timestamp: "10:18", isRead: true },
-        { id: 3, senderId: 101, content: "Tu as vu la nouvelle mise à jour du système?", timestamp: "10:30", isRead: false }
+        { id: 1, senderId: 101, content: "Salut! Comment ça va aujourd'hui?", timestamp: "10:15", status: 'read' },
+        { id: 2, senderId: 0, content: "Ça va bien, merci! Et toi?", timestamp: "10:18", status: 'read' },
+        { id: 3, senderId: 101, content: "Tu as vu la nouvelle mise à jour du système?", timestamp: "10:30", status: 'delivered' }
       ],
       2: [
-        { id: 1, senderId: 102, content: "Hey, j'ai besoin de ton aide pour une mission.", timestamp: "Hier, 18:42", isRead: true },
-        { id: 2, senderId: 0, content: "Bien sûr, de quoi s'agit-il?", timestamp: "Hier, 18:45", isRead: true },
-        { id: 3, senderId: 102, content: "Je t'envoie les coordonnées...", timestamp: "Hier, 18:50", isRead: true }
+        { id: 1, senderId: 102, content: "Hey, j'ai besoin de ton aide pour une mission.", timestamp: "Hier, 18:42", status: 'read' },
+        { id: 2, senderId: 0, content: "Bien sûr, de quoi s'agit-il?", timestamp: "Hier, 18:45", status: 'read' },
+        { id: 3, senderId: 102, content: "Je t'envoie les coordonnées...", timestamp: "Hier, 18:50", status: 'delivered' }
       ],
       3: [
-        { id: 1, senderId: 0, content: "Nova, tu me reçois?", timestamp: "Lun, 09:30", isRead: true },
-        { id: 2, senderId: 103, content: "5/5. Je suis dans la zone B.", timestamp: "Lun, 09:32", isRead: true },
-        { id: 3, senderId: 103, content: "Le signal est faible dans ce secteur.", timestamp: "Lun, 09:35", isRead: true }
+        { id: 1, senderId: 0, content: "Nova, tu me reçois?", timestamp: "Lun, 09:30", status: 'read' },
+        { id: 2, senderId: 103, content: "5/5. Je suis dans la zone B.", timestamp: "Lun, 09:32", status: 'read' },
+        { id: 3, senderId: 103, content: "Le signal est faible dans ce secteur.", timestamp: "Lun, 09:35", status: 'delivered' }
       ],
       4: [
-        { id: 1, senderId: 104, content: "Mission terminée. Rapport transmis.", timestamp: "12/05, 22:15", isRead: false }
+        { id: 1, senderId: 104, content: "Mission terminée. Rapport transmis.", timestamp: "12/05, 22:15", status: 'delivered' }
       ]
     };
     
@@ -118,25 +118,70 @@ export const useMessages = () => {
       senderId: 0, // 0 represents current user
       content: messageContent,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isRead: false
+      status: 'sending'
     };
     
     updatedMessages[activeConversation] = [...updatedMessages[activeConversation], newMsg];
     setMessages(updatedMessages);
     
+    // Simulate message status updates
+    // First, change to "sent" after a short delay
+    setTimeout(() => {
+      const msgIndex = updatedMessages[activeConversation].findIndex(m => m.id === newMsg.id);
+      if (msgIndex !== -1) {
+        updatedMessages[activeConversation][msgIndex].status = 'sent';
+        setMessages({...updatedMessages});
+      }
+    }, 1000);
+    
+    // Then, change to "delivered" after another delay
+    setTimeout(() => {
+      const msgIndex = updatedMessages[activeConversation].findIndex(m => m.id === newMsg.id);
+      if (msgIndex !== -1) {
+        updatedMessages[activeConversation][msgIndex].status = 'delivered';
+        setMessages({...updatedMessages});
+      }
+    }, 2000);
+    
+    // Set typing indicator
+    const updatedConversations = conversations.map(convo => {
+      if (convo.id === activeConversation) {
+        return { ...convo, typing: true };
+      }
+      return convo;
+    });
+    setConversations(updatedConversations);
+    
     // Simulate a reply after a delay
     setTimeout(() => {
       const activeConvo = conversations.find(c => c.id === activeConversation);
       if (activeConvo) {
+        // First remove typing indicator
+        const updatedConvos = conversations.map(convo => {
+          if (convo.id === activeConversation) {
+            return { ...convo, typing: false };
+          }
+          return convo;
+        });
+        setConversations(updatedConvos);
+        
+        // Then add reply message
         const replyMsg: Message = {
           id: Math.max(0, ...updatedMessages[activeConversation].map(m => m.id)) + 1,
           senderId: activeConvo.userId,
           content: "Je viens de recevoir ton message...",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          isRead: false
+          status: 'delivered'
         };
         
         updatedMessages[activeConversation] = [...updatedMessages[activeConversation], replyMsg];
+        
+        // Also mark the user's message as read
+        const msgIndex = updatedMessages[activeConversation].findIndex(m => m.id === newMsg.id);
+        if (msgIndex !== -1) {
+          updatedMessages[activeConversation][msgIndex].status = 'read';
+        }
+        
         setMessages({ ...updatedMessages });
       }
     }, 3000);

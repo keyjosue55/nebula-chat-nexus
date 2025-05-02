@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, CheckCheck, Clock } from 'lucide-react';
 import { Avatar } from "@/components/ui/avatar";
 
 interface Message {
@@ -8,7 +8,7 @@ interface Message {
   senderId: number;
   content: string;
   timestamp: string;
-  isRead: boolean;
+  status: 'sending' | 'sent' | 'delivered' | 'read';
 }
 
 interface MessageItemProps {
@@ -19,6 +19,24 @@ interface MessageItemProps {
 }
 
 const MessageItem = ({ message, isOwn, senderAvatar, senderName }: MessageItemProps) => {
+  // Render the appropriate status icon based on message status
+  const renderStatusIcon = () => {
+    if (!isOwn) return null;
+    
+    switch (message.status) {
+      case 'sending':
+        return <Clock size={12} className="text-gray-400" />;
+      case 'sent':
+        return <Check size={12} className="text-gray-400" />;
+      case 'delivered':
+        return <CheckCheck size={12} className="text-gray-400" />;
+      case 'read':
+        return <CheckCheck size={12} className="text-green-400" />;
+      default:
+        return null;
+    }
+  };
+  
   return (
     <div 
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
@@ -39,7 +57,7 @@ const MessageItem = ({ message, isOwn, senderAvatar, senderName }: MessageItemPr
         <p>{message.content}</p>
         <div className="flex items-center justify-end mt-1 space-x-1">
           <span className="text-xs opacity-70">{message.timestamp}</span>
-          {isOwn && <Check size={12} className={message.isRead ? 'text-green-400' : 'opacity-70'} />}
+          {renderStatusIcon()}
         </div>
       </div>
     </div>
