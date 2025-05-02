@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Thème sci-fi
+                neon: {
+                    blue: "#0EA5E9",
+                    purple: "#8B5CF6", 
+                    orange: "#F97316",
+                    pink: "#EC4899"
+                },
+                dark: {
+                    DEFAULT: "#121212",
+                    lighter: "#1A1A1A",
+                    light: "#2A2A2A"
+                }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -70,26 +83,42 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' }
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' }
+				},
+                'pulse-neon': {
+                    '0%, 100%': { opacity: '1' },
+                    '50%': { opacity: '0.7' }
+                },
+                'float': {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-10px)' }
+                },
+                'glitch': {
+                    '0%': { transform: 'translate(0)' },
+                    '20%': { transform: 'translate(-2px, 2px)' },
+                    '40%': { transform: 'translate(-2px, -2px)' },
+                    '60%': { transform: 'translate(2px, 2px)' },
+                    '80%': { transform: 'translate(2px, -2px)' },
+                    '100%': { transform: 'translate(0)' }
+                }
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+                'pulse-neon': 'pulse-neon 2s ease-in-out infinite',
+                'float': 'float 6s ease-in-out infinite',
+                'glitch': 'glitch 0.5s ease-in-out'
+			},
+            backgroundImage: {
+                'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                'gradient-conic': 'conic-gradient(var(--tw-gradient-stops))',
+                'cyber-grid': 'linear-gradient(rgba(14, 165, 233, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(14, 165, 233, 0.15) 1px, transparent 1px)'
+            }
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
