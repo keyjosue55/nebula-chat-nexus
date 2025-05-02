@@ -1,28 +1,9 @@
-
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ConversationItem from './ConversationItem';
-
-interface User {
-  id: number;
-  name: string;
-  avatar: string;
-  isOnline: boolean;
-}
-
-interface Conversation {
-  id: number;
-  isGroup: boolean;
-  name: string;
-  avatar: string;
-  participants: User[];
-  lastMessage: string;
-  lastMessageTime: string;
-  unreadCount: number;
-  typing: boolean;
-}
+import { User, Conversation } from '@/types/messages';
 
 interface ConversationListProps {
   conversations: Conversation[];

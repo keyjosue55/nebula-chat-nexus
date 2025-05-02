@@ -1,15 +1,7 @@
-
 import React from 'react';
 import { Check, CheckCheck, Clock } from 'lucide-react';
 import { Avatar } from "@/components/ui/avatar";
-
-interface Message {
-  id: number;
-  senderId: number;
-  content: string;
-  timestamp: string;
-  status: 'sending' | 'sent' | 'delivered' | 'read';
-}
+import { Message } from '@/types/messages';
 
 interface MessageItemProps {
   message: Message;

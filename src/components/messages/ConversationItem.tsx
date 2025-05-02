@@ -1,27 +1,10 @@
-
 import React from 'react';
 import { Avatar } from "@/components/ui/avatar";
 import { UsersRound } from 'lucide-react';
-
-interface User {
-  id: number;
-  name: string;
-  avatar: string;
-  isOnline: boolean;
-}
+import { User, Conversation } from '@/types/messages';
 
 interface ConversationItemProps {
-  conversation: {
-    id: number;
-    isGroup: boolean;
-    name: string;
-    avatar: string;
-    participants: User[];
-    lastMessage: string;
-    lastMessageTime: string;
-    unreadCount: number;
-    typing: boolean;
-  };
+  conversation: Conversation;
   isActive: boolean;
   onClick: () => void;
 }

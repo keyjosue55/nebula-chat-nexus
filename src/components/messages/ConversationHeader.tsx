@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Phone, UsersRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,13 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-interface User {
-  id: number;
-  name: string;
-  avatar: string;
-  isOnline: boolean;
-}
+import { User } from '@/types/messages';
 
 interface ConversationHeaderProps {
   conversation: {
