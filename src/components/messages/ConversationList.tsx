@@ -5,15 +5,22 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ConversationItem from './ConversationItem';
 
+interface User {
+  id: number;
+  name: string;
+  avatar: string;
+  isOnline: boolean;
+}
+
 interface Conversation {
   id: number;
-  userId: number;
-  userName: string;
-  userAvatar: string;
+  isGroup: boolean;
+  name: string;
+  avatar: string;
+  participants: User[];
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
-  isOnline: boolean;
   typing: boolean;
 }
 
@@ -32,7 +39,7 @@ const ConversationList = ({
 }: ConversationListProps) => {
   // Filter conversations by search query
   const filteredConversations = conversations.filter(convo => 
-    convo.userName.toLowerCase().includes(searchQuery.toLowerCase())
+    convo.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

@@ -5,6 +5,26 @@ import ConversationList from '@/components/messages/ConversationList';
 import MessageView from '@/components/messages/MessageView';
 import { useMessages } from '@/hooks/useMessages';
 
+// Import the interface to ensure consistency 
+interface User {
+  id: number;
+  name: string;
+  avatar: string;
+  isOnline: boolean;
+}
+
+interface Conversation {
+  id: number;
+  isGroup: boolean;
+  name: string;
+  avatar: string;
+  participants: User[];
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+  typing: boolean;
+}
+
 const Messages = () => {
   const {
     searchQuery,
