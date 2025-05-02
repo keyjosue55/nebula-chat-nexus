@@ -1,17 +1,25 @@
 
 import React from 'react';
 import { Avatar } from "@/components/ui/avatar";
+import { UsersRound } from 'lucide-react';
+
+interface User {
+  id: number;
+  name: string;
+  avatar: string;
+  isOnline: boolean;
+}
 
 interface ConversationItemProps {
   conversation: {
     id: number;
-    userId: number;
-    userName: string;
-    userAvatar: string;
+    isGroup: boolean;
+    name: string;
+    avatar: string;
+    participants: User[];
     lastMessage: string;
     lastMessageTime: string;
     unreadCount: number;
-    isOnline: boolean;
     typing: boolean;
   };
   isActive: boolean;
@@ -27,17 +35,29 @@ const ConversationItem = ({ conversation, isActive, onClick }: ConversationItemP
       onClick={onClick}
     >
       <div className="relative">
-        <Avatar className="h-12 w-12 border-2 border-neon-blue/30">
-          <img src={conversation.userAvatar} alt={conversation.userName} />
-        </Avatar>
-        {conversation.isOnline && (
+        {conversation.isGroup ? (
+          <div className="h-12 w-12 bg-neon-blue/20 rounded-full flex items-center justify-center">
+            <UsersRound className="h-6 w-6 text-neon-blue" />
+          </div>
+        ) : (
+          <Avatar className="h-12 w-12 border-2 border-neon-blue/30">
+            <img src={conversation.avatar} alt={conversation.name} />
+          </Avatar>
+        )}
+        
+        {!conversation.isGroup && conversation.participants[0].isOnline && (
           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-dark-lighter"></span>
         )}
       </div>
 
       <div className="ml-3 flex-1">
         <div className="flex justify-between items-baseline">
-          <h3 className="font-medium text-white">{conversation.userName}</h3>
+          <h3 className="font-medium text-white">
+            {conversation.name}
+            {conversation.isGroup && (
+              <span className="text-xs text-gray-400 ml-2">({conversation.participants.length})</span>
+            )}
+          </h3>
           <span className="text-xs text-gray-400">{conversation.lastMessageTime}</span>
         </div>
         <div className="flex justify-between items-baseline">

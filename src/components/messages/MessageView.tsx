@@ -13,15 +13,22 @@ interface Message {
   status: 'sending' | 'sent' | 'delivered' | 'read';
 }
 
+interface User {
+  id: number;
+  name: string;
+  avatar: string;
+  isOnline: boolean;
+}
+
 interface Conversation {
   id: number;
-  userId: number;
-  userName: string;
-  userAvatar: string;
+  isGroup: boolean;
+  name: string;
+  avatar: string;
+  participants: User[];
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
-  isOnline: boolean;
   typing: boolean;
 }
 
@@ -46,6 +53,19 @@ const MessageView = ({
     return <div className="flex-1 flex items-center justify-center">Conversation non trouvée</div>;
   }
   
+  // Function to find sender details for a message
+  const findSender = (senderId: number) => {
+    if (senderId === 0) return null; // Current user
+    
+    // For group chats, find the sender among participants
+    if (conversation.isGroup) {
+      return conversation.participants.find(p => p.id === senderId);
+    }
+    
+    // For direct messages, it's always the first participant
+    return conversation.participants[0];
+  };
+  
   return (
     <>
       <ConversationHeader conversation={conversation} onBack={onBack} />
@@ -54,15 +74,16 @@ const MessageView = ({
         <div className="space-y-4">
           {messages[activeConversation]?.map(msg => {
             const isOwn = msg.senderId === 0;
-            const sender = isOwn ? null : conversations.find(c => c.userId === msg.senderId);
+            const sender = findSender(msg.senderId);
             
             return (
               <MessageItem 
                 key={msg.id} 
                 message={msg} 
                 isOwn={isOwn}
-                senderAvatar={sender?.userAvatar}
-                senderName={sender?.userName}
+                senderAvatar={sender?.avatar}
+                senderName={sender?.name}
+                isGroup={conversation.isGroup}
               />
             );
           })}

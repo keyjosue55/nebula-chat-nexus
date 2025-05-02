@@ -9,15 +9,22 @@ interface Message {
   status: 'sending' | 'sent' | 'delivered' | 'read';
 }
 
+interface User {
+  id: number;
+  name: string;
+  avatar: string;
+  isOnline: boolean;
+}
+
 interface Conversation {
   id: number;
-  userId: number;
-  userName: string;
-  userAvatar: string;
+  isGroup: boolean;
+  name: string;
+  avatar: string;
+  participants: User[];
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
-  isOnline: boolean;
   typing: boolean;
 }
 
@@ -30,51 +37,101 @@ export const useMessages = () => {
 
   // Load demo data
   useEffect(() => {
+    // Demo users
+    const demoUsers: User[] = [
+      {
+        id: 101,
+        name: "Aria Chen",
+        avatar: "https://i.pravatar.cc/150?img=1",
+        isOnline: true
+      },
+      {
+        id: 102,
+        name: "Marcus Wright",
+        avatar: "https://i.pravatar.cc/150?img=2",
+        isOnline: false
+      },
+      {
+        id: 103,
+        name: "Nova Kaneda",
+        avatar: "https://i.pravatar.cc/150?img=3",
+        isOnline: true
+      },
+      {
+        id: 104,
+        name: "Lex Freeman",
+        avatar: "https://i.pravatar.cc/150?img=4",
+        isOnline: false
+      }
+    ];
+
     // Simuler le chargement des conversations
     const demoConversations: Conversation[] = [
       {
         id: 1,
-        userId: 101,
-        userName: "Aria Chen",
-        userAvatar: "https://i.pravatar.cc/150?img=1",
+        isGroup: false,
+        name: "Aria Chen",
+        avatar: "https://i.pravatar.cc/150?img=1",
+        participants: [demoUsers[0]],
         lastMessage: "Tu as vu la nouvelle mise à jour du système?",
         lastMessageTime: "10:30",
         unreadCount: 2,
-        isOnline: true,
         typing: false
       },
       {
         id: 2,
-        userId: 102,
-        userName: "Marcus Wright",
-        userAvatar: "https://i.pravatar.cc/150?img=2",
+        isGroup: false,
+        name: "Marcus Wright",
+        avatar: "https://i.pravatar.cc/150?img=2",
+        participants: [demoUsers[1]],
         lastMessage: "Je t'envoie les coordonnées...",
         lastMessageTime: "Hier",
         unreadCount: 0,
-        isOnline: false,
         typing: false
       },
       {
         id: 3,
-        userId: 103,
-        userName: "Nova Kaneda",
-        userAvatar: "https://i.pravatar.cc/150?img=3",
+        isGroup: false,
+        name: "Nova Kaneda",
+        avatar: "https://i.pravatar.cc/150?img=3",
+        participants: [demoUsers[2]],
         lastMessage: "Le signal est faible dans ce secteur.",
         lastMessageTime: "Lun",
         unreadCount: 0,
-        isOnline: true,
         typing: true
       },
       {
         id: 4,
-        userId: 104,
-        userName: "Lex Freeman",
-        userAvatar: "https://i.pravatar.cc/150?img=4",
+        isGroup: false,
+        name: "Lex Freeman",
+        avatar: "https://i.pravatar.cc/150?img=4",
+        participants: [demoUsers[3]],
         lastMessage: "Mission terminée. Rapport transmis.",
         lastMessageTime: "12/05",
         unreadCount: 1,
-        isOnline: false,
         typing: false
+      },
+      {
+        id: 5,
+        isGroup: true,
+        name: "Equipe Alpha",
+        avatar: "", // Will use initials or group icon
+        participants: [demoUsers[0], demoUsers[1], demoUsers[2]],
+        lastMessage: "Briefing de mission à 15h00",
+        lastMessageTime: "09:45",
+        unreadCount: 3,
+        typing: false
+      },
+      {
+        id: 6,
+        isGroup: true,
+        name: "Projet Nexus",
+        avatar: "",
+        participants: [demoUsers[1], demoUsers[2], demoUsers[3]],
+        lastMessage: "Les mises à jour sont en cours de déploiement",
+        lastMessageTime: "Hier",
+        unreadCount: 0,
+        typing: true
       }
     ];
     
@@ -99,6 +156,17 @@ export const useMessages = () => {
       ],
       4: [
         { id: 1, senderId: 104, content: "Mission terminée. Rapport transmis.", timestamp: "12/05, 22:15", status: 'delivered' }
+      ],
+      5: [
+        { id: 1, senderId: 101, content: "Bonjour à tous, briefing de mission à 15h00 aujourd'hui.", timestamp: "09:30", status: 'read' },
+        { id: 2, senderId: 102, content: "Je serai là.", timestamp: "09:35", status: 'read' },
+        { id: 3, senderId: 103, content: "Compris. J'apporte les rapports.", timestamp: "09:40", status: 'read' },
+        { id: 4, senderId: 0, content: "Je prépare la salle de réunion.", timestamp: "09:45", status: 'delivered' }
+      ],
+      6: [
+        { id: 1, senderId: 102, content: "Les mises à jour de sécurité sont prêtes à être déployées.", timestamp: "Hier, 14:20", status: 'read' },
+        { id: 2, senderId: 103, content: "J'ai terminé les tests sur l'environnement de développement.", timestamp: "Hier, 14:30", status: 'read' },
+        { id: 3, senderId: 104, content: "Les mises à jour sont en cours de déploiement. Surveillance en cours.", timestamp: "Hier, 15:45", status: 'delivered' }
       ]
     };
     
@@ -165,16 +233,32 @@ export const useMessages = () => {
         });
         setConversations(updatedConvos);
         
-        // Then add reply message
-        const replyMsg: Message = {
-          id: Math.max(0, ...updatedMessages[activeConversation].map(m => m.id)) + 1,
-          senderId: activeConvo.userId,
-          content: "Je viens de recevoir ton message...",
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          status: 'delivered'
-        };
-        
-        updatedMessages[activeConversation] = [...updatedMessages[activeConversation], replyMsg];
+        // Then add reply message(s)
+        if (activeConvo.isGroup) {
+          // For group chats, simulate multiple replies
+          const randomParticipant = activeConvo.participants[Math.floor(Math.random() * activeConvo.participants.length)];
+          
+          const replyMsg: Message = {
+            id: Math.max(0, ...updatedMessages[activeConversation].map(m => m.id)) + 1,
+            senderId: randomParticipant.id,
+            content: "J'ai bien reçu ton message...",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'delivered'
+          };
+          
+          updatedMessages[activeConversation] = [...updatedMessages[activeConversation], replyMsg];
+        } else {
+          // For direct messages, simulate a single reply
+          const replyMsg: Message = {
+            id: Math.max(0, ...updatedMessages[activeConversation].map(m => m.id)) + 1,
+            senderId: activeConvo.participants[0].id,
+            content: "Je viens de recevoir ton message...",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'delivered'
+          };
+          
+          updatedMessages[activeConversation] = [...updatedMessages[activeConversation], replyMsg];
+        }
         
         // Also mark the user's message as read
         const msgIndex = updatedMessages[activeConversation].findIndex(m => m.id === newMsg.id);
