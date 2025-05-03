@@ -77,7 +77,7 @@ export const useMessages = () => {
         toggleTypingIndicator(prevConversations, conversationId, false)
       );
       
-      const updatedMessages = { ...messages };
+      let updatedMessages = { ...messages };
       const conversationMessages = updatedMessages[conversationId] || [];
 
       // Generate reply based on conversation type
@@ -110,14 +110,15 @@ export const useMessages = () => {
       }
       
       // Mark the user's message as read
-      updatedMessages = updateMessageStatus(
+      // Use a new variable instead of reassigning the updatedMessages constant
+      const finalMessages = updateMessageStatus(
         updatedMessages, 
         conversationId, 
         sentMessageId, 
         'read'
       );
       
-      setMessages(updatedMessages);
+      setMessages(finalMessages);
     }, 3000);
   };
 
