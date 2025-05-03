@@ -102,32 +102,32 @@ export const demoConversations: Conversation[] = [
 // Demo messages for each conversation
 export const demoMessages: Record<number, Message[]> = {
   1: [
-    { id: 1, senderId: 101, content: "Salut! Comment ça va aujourd'hui?", timestamp: "10:15", status: 'read' },
-    { id: 2, senderId: 0, content: "Ça va bien, merci! Et toi?", timestamp: "10:18", status: 'read' },
-    { id: 3, senderId: 101, content: "Tu as vu la nouvelle mise à jour du système?", timestamp: "10:30", status: 'delivered' }
+    { id: 1, senderId: 101, content: "Salut! Comment ça va aujourd'hui?", timestamp: "10:15", status: 'read', type: 'text' },
+    { id: 2, senderId: 0, content: "Ça va bien, merci! Et toi?", timestamp: "10:18", status: 'read', type: 'text' },
+    { id: 3, senderId: 101, content: "Tu as vu la nouvelle mise à jour du système?", timestamp: "10:30", status: 'delivered', type: 'text' }
   ],
   2: [
-    { id: 1, senderId: 102, content: "Hey, j'ai besoin de ton aide pour une mission.", timestamp: "Hier, 18:42", status: 'read' },
-    { id: 2, senderId: 0, content: "Bien sûr, de quoi s'agit-il?", timestamp: "Hier, 18:45", status: 'read' },
-    { id: 3, senderId: 102, content: "Je t'envoie les coordonnées...", timestamp: "Hier, 18:50", status: 'delivered' }
+    { id: 1, senderId: 102, content: "Hey, j'ai besoin de ton aide pour une mission.", timestamp: "Hier, 18:42", status: 'read', type: 'text' },
+    { id: 2, senderId: 0, content: "Bien sûr, de quoi s'agit-il?", timestamp: "Hier, 18:45", status: 'read', type: 'text' },
+    { id: 3, senderId: 102, content: "Je t'envoie les coordonnées...", timestamp: "Hier, 18:50", status: 'delivered', type: 'text' }
   ],
   3: [
-    { id: 1, senderId: 0, content: "Nova, tu me reçois?", timestamp: "Lun, 09:30", status: 'read' },
-    { id: 2, senderId: 103, content: "5/5. Je suis dans la zone B.", timestamp: "Lun, 09:32", status: 'read' },
-    { id: 3, senderId: 103, content: "Le signal est faible dans ce secteur.", timestamp: "Lun, 09:35", status: 'delivered' }
+    { id: 1, senderId: 0, content: "Nova, tu me reçois?", timestamp: "Lun, 09:30", status: 'read', type: 'text' },
+    { id: 2, senderId: 103, content: "5/5. Je suis dans la zone B.", timestamp: "Lun, 09:32", status: 'read', type: 'text' },
+    { id: 3, senderId: 103, content: "Le signal est faible dans ce secteur.", timestamp: "Lun, 09:35", status: 'delivered', type: 'text' }
   ],
   4: [
-    { id: 1, senderId: 104, content: "Mission terminée. Rapport transmis.", timestamp: "12/05, 22:15", status: 'delivered' }
+    { id: 1, senderId: 104, content: "Mission terminée. Rapport transmis.", timestamp: "12/05, 22:15", status: 'delivered', type: 'text' }
   ],
   5: [
-    { id: 1, senderId: 101, content: "Bonjour à tous, briefing de mission à 15h00 aujourd'hui.", timestamp: "09:30", status: 'read' },
-    { id: 2, senderId: 102, content: "Je serai là.", timestamp: "09:35", status: 'read' },
-    { id: 3, senderId: 103, content: "Compris. J'apporte les rapports.", timestamp: "09:40", status: 'read' },
-    { id: 4, senderId: 0, content: "Je prépare la salle de réunion.", timestamp: "09:45", status: 'delivered' }
+    { id: 1, senderId: 101, content: "Bonjour à tous, briefing de mission à 15h00 aujourd'hui.", timestamp: "09:30", status: 'read', type: 'text' },
+    { id: 2, senderId: 102, content: "Je serai là.", timestamp: "09:35", status: 'read', type: 'text' },
+    { id: 3, senderId: 103, content: "Compris. J'apporte les rapports.", timestamp: "09:40", status: 'read', type: 'text' },
+    { id: 4, senderId: 0, content: "Je prépare la salle de réunion.", timestamp: "09:45", status: 'delivered', type: 'text' }
   ],
   6: [
-    { id: 1, senderId: 102, content: "Les mises à jour de sécurité sont prêtes à être déployées.", timestamp: "Hier, 14:20", status: 'read' },
-    { id: 2, senderId: 103, content: "J'ai terminé les tests sur l'environnement de développement.", timestamp: "Hier, 14:30", status: 'read' },
-    { id: 3, senderId: 104, content: "Les mises à jour sont en cours de déploiement. Surveillance en cours.", timestamp: "Hier, 15:45", status: 'delivered' }
+    { id: 1, senderId: 102, content: "Les mises à jour de sécurité sont prêtes à être déployées.", timestamp: "Hier, 14:20", status: 'read', type: 'text' },
+    { id: 2, senderId: 103, content: "J'ai terminé les tests sur l'environnement de développement.", timestamp: "Hier, 14:30", status: 'read', type: 'text' },
+    { id: 3, senderId: 104, content: "Les mises à jour sont en cours de déploiement. Surveillance en cours.", timestamp: "Hier, 15:45", status: 'delivered', type: 'text' }
   ]
 };
