@@ -31,7 +31,8 @@ export interface Conversation {
 
 export interface CurrentUser {
   id: number;
+  firstName: string;
+  lastName: string;
   name: string;
   avatar: string;
 }
-

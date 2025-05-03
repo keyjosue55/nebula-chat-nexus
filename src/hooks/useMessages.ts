@@ -12,6 +12,8 @@ import {
 // Utilisateur courant simulé
 const currentUser: CurrentUser = {
   id: 0,
+  firstName: "Julien",
+  lastName: "Leroux",
   name: "Julien Leroux",
   avatar: "https://i.pravatar.cc/300"
 };
@@ -136,12 +138,24 @@ export const useMessages = () => {
   };
 
   // Update user profile
-  const updateUserProfile = (name?: string, avatar?: string) => {
-    setUser(prevUser => ({
-      ...prevUser,
-      ...(name && { name }),
-      ...(avatar && { avatar })
-    }));
+  const updateUserProfile = (firstName?: string, lastName?: string, avatar?: string) => {
+    setUser(prevUser => {
+      const updates: Partial<CurrentUser> = {};
+      
+      if (firstName !== undefined) updates.firstName = firstName;
+      if (lastName !== undefined) updates.lastName = lastName;
+      
+      // Mettre à jour le nom complet si prénom ou nom ont changé
+      if (firstName !== undefined || lastName !== undefined) {
+        const newFirstName = firstName !== undefined ? firstName : prevUser.firstName;
+        const newLastName = lastName !== undefined ? lastName : prevUser.lastName;
+        updates.name = `${newFirstName} ${newLastName}`;
+      }
+      
+      if (avatar !== undefined) updates.avatar = avatar;
+      
+      return { ...prevUser, ...updates };
+    });
   };
 
   return {
