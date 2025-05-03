@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Check, CheckCheck, Clock } from 'lucide-react';
+import { Check, CheckCheck, Clock, File, FileAudio, Video, Image } from 'lucide-react';
 import { Avatar } from "@/components/ui/avatar";
 import { Message } from '@/types/messages';
 
@@ -29,6 +30,55 @@ const MessageItem = ({ message, isOwn, senderAvatar, senderName, isGroup = false
         return null;
     }
   };
+
+  // Render message content based on type
+  const renderMessageContent = () => {
+    switch (message.type) {
+      case 'image':
+        return (
+          <div className="relative">
+            <img 
+              src={message.mediaUrl} 
+              alt="Image" 
+              className="max-w-full rounded-lg max-h-60 object-contain" 
+            />
+            {message.content && <p className="mt-1">{message.content}</p>}
+          </div>
+        );
+      case 'video':
+        return (
+          <div className="relative">
+            <div className="bg-dark-lighter rounded-lg p-3 flex items-center">
+              <Video size={24} className="text-neon-blue mr-2" />
+              <span className="text-sm">{message.fileName || 'Vidéo'}</span>
+            </div>
+            {message.content && <p className="mt-1">{message.content}</p>}
+          </div>
+        );
+      case 'audio':
+        return (
+          <div className="relative">
+            <div className="bg-dark-lighter rounded-lg p-3 flex items-center">
+              <FileAudio size={24} className="text-neon-blue mr-2" />
+              <span className="text-sm">{message.fileName || 'Audio'}</span>
+            </div>
+            {message.content && <p className="mt-1">{message.content}</p>}
+          </div>
+        );
+      case 'document':
+        return (
+          <div className="relative">
+            <div className="bg-dark-lighter rounded-lg p-3 flex items-center">
+              <File size={24} className="text-neon-blue mr-2" />
+              <span className="text-sm">{message.fileName || 'Document'}</span>
+            </div>
+            {message.content && <p className="mt-1">{message.content}</p>}
+          </div>
+        );
+      default:
+        return <p>{message.content}</p>;
+    }
+  };
   
   return (
     <div 
@@ -51,7 +101,7 @@ const MessageItem = ({ message, isOwn, senderAvatar, senderName, isGroup = false
               : 'bg-dark-light text-white rounded-bl-none'
           }`}
         >
-          <p>{message.content}</p>
+          {renderMessageContent()}
           <div className="flex items-center justify-end mt-1 space-x-1">
             <span className="text-xs opacity-70">{message.timestamp}</span>
             {renderStatusIcon()}

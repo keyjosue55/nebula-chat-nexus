@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Message, Conversation } from '../types/messages';
+import { Message, Conversation, CurrentUser } from '../types/messages';
 import { demoConversations, demoMessages } from '../data/demoMessages';
 import { 
   updateMessageStatus, 
@@ -9,11 +9,19 @@ import {
   getCurrentTime 
 } from '../utils/messageUtils';
 
+// Utilisateur courant simulé
+const currentUser: CurrentUser = {
+  id: 0,
+  name: "Julien Leroux",
+  avatar: "https://i.pravatar.cc/300"
+};
+
 export const useMessages = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeConversation, setActiveConversation] = useState<number | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Record<number, Message[]>>({});
+  const [user, setUser] = useState<CurrentUser>(currentUser);
 
   // Load demo data
   useEffect(() => {
@@ -25,8 +33,8 @@ export const useMessages = () => {
   }, []);
 
   // Send a new message
-  const handleSendMessage = (messageContent: string) => {
-    if (!messageContent.trim() || !activeConversation) return;
+  const handleSendMessage = (messageContent: string, type: 'text' | 'image' | 'video' | 'audio' | 'document' = 'text', mediaUrl?: string, fileName?: string) => {
+    if ((!messageContent.trim() && type === 'text') || !activeConversation) return;
     
     const updatedMessages = { ...messages };
     const conversationMessages = updatedMessages[activeConversation] || [];
@@ -36,7 +44,10 @@ export const useMessages = () => {
       senderId: 0, // 0 represents current user
       content: messageContent,
       timestamp: getCurrentTime(),
-      status: 'sending'
+      status: 'sending',
+      type,
+      ...(mediaUrl && { mediaUrl }),
+      ...(fileName && { fileName })
     };
     
     updatedMessages[activeConversation] = [...conversationMessages, newMsg];
@@ -92,7 +103,8 @@ export const useMessages = () => {
           senderId: randomParticipant.id,
           content: "J'ai bien reçu ton message...",
           timestamp: getCurrentTime(),
-          status: 'delivered'
+          status: 'delivered',
+          type: 'text'
         };
         
         updatedMessages[conversationId] = [...conversationMessages, replyMsg];
@@ -103,7 +115,8 @@ export const useMessages = () => {
           senderId: activeConvo.participants[0].id,
           content: "Je viens de recevoir ton message...",
           timestamp: getCurrentTime(),
-          status: 'delivered'
+          status: 'delivered',
+          type: 'text'
         };
         
         updatedMessages[conversationId] = [...conversationMessages, replyMsg];
@@ -122,6 +135,15 @@ export const useMessages = () => {
     }, 3000);
   };
 
+  // Update user profile
+  const updateUserProfile = (name?: string, avatar?: string) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...(name && { name }),
+      ...(avatar && { avatar })
+    }));
+  };
+
   return {
     searchQuery,
     setSearchQuery,
@@ -129,6 +151,8 @@ export const useMessages = () => {
     setActiveConversation,
     conversations,
     messages,
-    handleSendMessage
+    handleSendMessage,
+    user,
+    updateUserProfile
   };
 };

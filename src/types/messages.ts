@@ -5,6 +5,9 @@ export interface Message {
   content: string;
   timestamp: string;
   status: 'sending' | 'sent' | 'delivered' | 'read';
+  type: 'text' | 'image' | 'video' | 'audio' | 'document';
+  mediaUrl?: string;
+  fileName?: string;
 }
 
 export interface User {
@@ -25,3 +28,10 @@ export interface Conversation {
   unreadCount: number;
   typing: boolean;
 }
+
+export interface CurrentUser {
+  id: number;
+  name: string;
+  avatar: string;
+}
+

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Camera, LogOut, Edit, Bell, Check } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Avatar } from "@/components/ui/avatar";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useMessages } from "@/hooks/useMessages";
 
 const Profile = () => {
   const { toast } = useToast();
@@ -14,18 +15,8 @@ const Profile = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-
-  // Simuler le profil utilisateur
-  const user = {
-    name: "Julien Leroux",
-    username: "@cosmicJ",
-    avatar: "https://i.pravatar.cc/300",
-    email: "julien.leroux@gmail.com",
-    bio: "Explorer numérique | Communicateur interstellaire | Toujours connecté",
-    followers: 287,
-    following: 152,
-    joined: "Mars 2025",
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, updateUserProfile } = useMessages();
 
   const handleLogout = () => {
     toast({
@@ -64,6 +55,29 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarChange = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        updateUserProfile(undefined, e.target.result as string);
+        toast({
+          title: "Photo de profil mise à jour",
+          variant: "default",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <AppLayout>
       <div className="flex flex-col min-h-[calc(100vh-64px)]">
@@ -75,9 +89,19 @@ const Profile = () => {
               <Avatar className="w-32 h-32 border-4 border-dark">
                 <img src={user.avatar} alt={user.name} className="object-cover" />
               </Avatar>
-              <button className="absolute bottom-2 right-2 bg-neon-blue text-white p-1.5 rounded-full">
+              <button 
+                className="absolute bottom-2 right-2 bg-neon-blue text-white p-1.5 rounded-full"
+                onClick={handleAvatarChange}
+              >
                 <Camera size={18} />
               </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*"
+                onChange={handleFileChange}
+              />
             </div>
           </div>
         </div>
@@ -85,16 +109,16 @@ const Profile = () => {
         {/* Informations de profil */}
         <div className="mt-20 px-6 text-center">
           <h2 className="text-2xl font-bold text-white">{user.name}</h2>
-          <p className="text-neon-blue">{user.username}</p>
-          <p className="text-gray-400 mt-2 max-w-sm mx-auto">{user.bio}</p>
+          <p className="text-neon-blue">@{user.name.toLowerCase().replace(/\s/g, '')}</p>
+          <p className="text-gray-400 mt-2 max-w-sm mx-auto">Explorer numérique | Communicateur interstellaire | Toujours connecté</p>
 
           <div className="flex justify-center mt-4 space-x-6">
             <div className="text-center">
-              <p className="text-white font-bold">{user.followers}</p>
+              <p className="text-white font-bold">287</p>
               <p className="text-gray-400 text-sm">Abonnés</p>
             </div>
             <div className="text-center">
-              <p className="text-white font-bold">{user.following}</p>
+              <p className="text-white font-bold">152</p>
               <p className="text-gray-400 text-sm">Abonnements</p>
             </div>
           </div>

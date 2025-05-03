@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MessageItem from './MessageItem';
@@ -10,7 +11,7 @@ interface MessageViewProps {
   conversations: Conversation[];
   messages: Record<number, Message[]>;
   onBack: () => void;
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, type?: 'text' | 'image' | 'video' | 'audio' | 'document', mediaUrl?: string, fileName?: string) => void;
 }
 
 const MessageView = ({ 
