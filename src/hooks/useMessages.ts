@@ -3,21 +3,21 @@ import { useState, useEffect, useCallback } from 'react';
 import { CurrentUser, Message, Conversation } from '@/types/messages';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
-import { demoMessages, demoConversations, demoContacts } from '@/data/demoMessages';
+import { demoMessages, demoConversations } from '@/data/demoMessages';
 
 export const useMessages = () => {
   const { user } = useAuth();
   const [currentUser, setCurrentUser] = useState<CurrentUser>({
-    id: "",
+    id: 0, // Changed from string to number to match the type
     name: "",
     firstName: "",
     lastName: "",
     avatar: "/placeholder.svg"
   });
-  const [messages, setMessages] = useState<Message[]>(demoMessages);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeConversation, setActiveConversation] = useState<number | null>(null);
+  const [messages, setMessages] = useState<Record<number, Message[]>>(demoMessages);
   const [conversations, setConversations] = useState<Conversation[]>(demoConversations);
-  const [contacts, setContacts] = useState(demoContacts);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fonction pour charger le profil utilisateur depuis Supabase
@@ -35,7 +35,7 @@ export const useMessages = () => {
 
       if (data) {
         setCurrentUser({
-          id: user.id,
+          id: 0, // Using 0 for current user to match the demo data structure
           name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
           firstName: data.first_name || '',
           lastName: data.last_name || '',
@@ -121,47 +121,58 @@ export const useMessages = () => {
   };
 
   // Sélectionner une conversation
-  const selectConversation = (conversationId: string) => {
-    setSelectedConversationId(conversationId);
+  const selectConversation = (conversationId: number) => {
+    setActiveConversation(conversationId);
   };
 
   // Obtenir la conversation sélectionnée
-  const selectedConversation = selectedConversationId
-    ? conversations.find(conv => conv.id === selectedConversationId) || null
+  const selectedConversation = activeConversation
+    ? conversations.find(conv => conv.id === activeConversation) || null
     : null;
 
   // Obtenir les messages de la conversation sélectionnée
-  const conversationMessages = selectedConversationId
-    ? messages.filter(msg => msg.conversationId === selectedConversationId)
+  const conversationMessages = activeConversation && messages[activeConversation]
+    ? messages[activeConversation]
     : [];
 
   // Fonction pour envoyer un message
-  const sendMessage = (content: string) => {
-    if (!selectedConversationId || !content.trim() || !user) return;
+  const handleSendMessage = (content: string, type: 'text' | 'image' | 'video' | 'audio' | 'document' = 'text', mediaUrl?: string, fileName?: string) => {
+    if (!activeConversation || !content.trim()) return;
 
     const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: selectedConversationId,
-      senderId: user.id,
+      id: Math.max(0, ...(messages[activeConversation]?.map(m => m.id) || [0])) + 1,
+      senderId: 0,
       content,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
       status: 'sent',
-      isRead: false
+      type,
+      mediaUrl,
+      fileName
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => {
+      const updated = { ...prev };
+      if (!updated[activeConversation]) {
+        updated[activeConversation] = [];
+      }
+      updated[activeConversation] = [...updated[activeConversation], newMessage];
+      return updated;
+    });
   };
 
   return {
     user: currentUser,
     messages,
     conversations,
-    contacts,
     selectedConversation,
     conversationMessages,
     isLoading,
+    searchQuery,
+    setSearchQuery,
+    activeConversation,
+    setActiveConversation,
     selectConversation,
-    sendMessage,
+    handleSendMessage,
     updateUserProfile,
     uploadProfileImage
   };

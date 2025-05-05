@@ -39,6 +39,8 @@ const MessageView = ({
     // For direct messages, it's always the first participant
     return conversation.participants[0];
   };
+
+  const conversationMessages = messages[activeConversation] || [];
   
   return (
     <>
@@ -46,7 +48,7 @@ const MessageView = ({
       
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {messages[activeConversation]?.map(msg => {
+          {conversationMessages.map(msg => {
             const isOwn = msg.senderId === 0;
             const sender = findSender(msg.senderId);
             
