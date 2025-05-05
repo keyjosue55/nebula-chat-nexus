@@ -3,9 +3,12 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -22,23 +25,29 @@ const Auth = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simuler une requête d'authentification
-    setTimeout(() => {
+    try {
       if (isLogin) {
-        // Simuler une connexion réussie
+        // Connexion
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) throw error;
+
         toast({
           title: "Connexion réussie",
           description: "Bienvenue dans SabaOngeya",
           variant: "default",
         });
-        // Rediriger vers la page des messages
-        window.location.href = '/messages';
+
+        navigate('/messages');
       } else {
-        // Valider le formulaire d'inscription
+        // Validation du formulaire d'inscription
         if (formData.password !== formData.confirmPassword) {
           toast({
             title: "Erreur",
@@ -49,7 +58,20 @@ const Auth = () => {
           return;
         }
         
-        // Simuler une inscription réussie
+        // Inscription
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              first_name: formData.name.split(' ')[0] || '',
+              last_name: formData.name.split(' ').slice(1).join(' ') || '',
+            }
+          }
+        });
+
+        if (error) throw error;
+
         toast({
           title: "Inscription réussie",
           description: "Veuillez vérifier votre email pour confirmer votre compte",
@@ -59,8 +81,15 @@ const Auth = () => {
         // Afficher le formulaire de connexion après l'inscription
         setIsLogin(true);
       }
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
