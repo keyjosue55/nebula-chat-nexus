@@ -1,172 +1,168 @@
 
-import { useState, useEffect } from 'react';
-import { Message, Conversation, CurrentUser } from '../types/messages';
-import { demoConversations, demoMessages } from '../data/demoMessages';
-import { 
-  updateMessageStatus, 
-  toggleTypingIndicator, 
-  generateMessageId,
-  getCurrentTime 
-} from '../utils/messageUtils';
-
-// Utilisateur courant simulé
-const currentUser: CurrentUser = {
-  id: 0,
-  firstName: "Julien",
-  lastName: "Leroux",
-  name: "Julien Leroux",
-  avatar: "https://i.pravatar.cc/300"
-};
+import { useState, useEffect, useCallback } from 'react';
+import { CurrentUser, Message, Conversation } from '@/types/messages';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import { demoMessages, demoConversations, demoContacts } from '@/data/demoMessages';
 
 export const useMessages = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeConversation, setActiveConversation] = useState<number | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<Record<number, Message[]>>({});
-  const [user, setUser] = useState<CurrentUser>(currentUser);
+  const { user } = useAuth();
+  const [currentUser, setCurrentUser] = useState<CurrentUser>({
+    id: "",
+    name: "",
+    firstName: "",
+    lastName: "",
+    avatar: "/placeholder.svg"
+  });
+  const [messages, setMessages] = useState<Message[]>(demoMessages);
+  const [conversations, setConversations] = useState<Conversation[]>(demoConversations);
+  const [contacts, setContacts] = useState(demoContacts);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load demo data
+  // Fonction pour charger le profil utilisateur depuis Supabase
+  const loadUserProfile = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setCurrentUser({
+          id: user.id,
+          name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          avatar: data.avatar_url || "/placeholder.svg"
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement du profil:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Charger le profil utilisateur au démarrage ou quand l'utilisateur change
   useEffect(() => {
-    setConversations(demoConversations);
-    setMessages(demoMessages);
-    
-    // By default, open the first conversation
-    setActiveConversation(1);
-  }, []);
+    if (user) {
+      loadUserProfile();
+    }
+  }, [user, loadUserProfile]);
 
-  // Send a new message
-  const handleSendMessage = (messageContent: string, type: 'text' | 'image' | 'video' | 'audio' | 'document' = 'text', mediaUrl?: string, fileName?: string) => {
-    if ((!messageContent.trim() && type === 'text') || !activeConversation) return;
-    
-    const updatedMessages = { ...messages };
-    const conversationMessages = updatedMessages[activeConversation] || [];
-    
-    const newMsg: Message = {
-      id: generateMessageId(conversationMessages),
-      senderId: 0, // 0 represents current user
-      content: messageContent,
-      timestamp: getCurrentTime(),
-      status: 'sending',
-      type,
-      ...(mediaUrl && { mediaUrl }),
-      ...(fileName && { fileName })
+  const updateUserProfile = async (firstName?: string, lastName?: string, avatarUrl?: string) => {
+    if (!user) return;
+
+    try {
+      const updates: {
+        first_name?: string;
+        last_name?: string;
+        avatar_url?: string;
+        updated_at: string;
+      } = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (firstName !== undefined) updates.first_name = firstName;
+      if (lastName !== undefined) updates.last_name = lastName;
+      if (avatarUrl !== undefined) updates.avatar_url = avatarUrl;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      // Mettre à jour l'état local du profil utilisateur
+      setCurrentUser(prev => ({
+        ...prev,
+        firstName: firstName !== undefined ? firstName : prev.firstName,
+        lastName: lastName !== undefined ? lastName : prev.lastName,
+        name: `${firstName !== undefined ? firstName : prev.firstName} ${lastName !== undefined ? lastName : prev.lastName}`.trim(),
+        avatar: avatarUrl !== undefined ? avatarUrl : prev.avatar
+      }));
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du profil:", error);
+      throw error;
+    }
+  };
+
+  // Fonction pour télécharger une image de profil dans Supabase Storage
+  const uploadProfileImage = async (file: File): Promise<string> => {
+    if (!user) throw new Error("Utilisateur non connecté");
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error("Erreur lors du téléchargement de l'image:", error);
+      throw error;
+    }
+  };
+
+  // Sélectionner une conversation
+  const selectConversation = (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+  };
+
+  // Obtenir la conversation sélectionnée
+  const selectedConversation = selectedConversationId
+    ? conversations.find(conv => conv.id === selectedConversationId) || null
+    : null;
+
+  // Obtenir les messages de la conversation sélectionnée
+  const conversationMessages = selectedConversationId
+    ? messages.filter(msg => msg.conversationId === selectedConversationId)
+    : [];
+
+  // Fonction pour envoyer un message
+  const sendMessage = (content: string) => {
+    if (!selectedConversationId || !content.trim() || !user) return;
+
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      conversationId: selectedConversationId,
+      senderId: user.id,
+      content,
+      timestamp: new Date().toISOString(),
+      status: 'sent',
+      isRead: false
     };
-    
-    updatedMessages[activeConversation] = [...conversationMessages, newMsg];
-    setMessages(updatedMessages);
-    
-    // Simulate message status updates
-    // First, change to "sent" after a short delay
-    setTimeout(() => {
-      setMessages(prevMessages => 
-        updateMessageStatus(prevMessages, activeConversation, newMsg.id, 'sent')
-      );
-    }, 1000);
-    
-    // Then, change to "delivered" after another delay
-    setTimeout(() => {
-      setMessages(prevMessages => 
-        updateMessageStatus(prevMessages, activeConversation, newMsg.id, 'delivered')
-      );
-    }, 2000);
-    
-    // Set typing indicator
-    setConversations(prevConversations => 
-      toggleTypingIndicator(prevConversations, activeConversation, true)
-    );
-    
-    // Simulate a reply after a delay
-    simulateReply(activeConversation, newMsg.id);
-  };
 
-  // Simulate reply from the other participant
-  const simulateReply = (conversationId: number, sentMessageId: number) => {
-    setTimeout(() => {
-      const activeConvo = conversations.find(c => c.id === conversationId);
-      if (!activeConvo) return;
-
-      // First remove typing indicator
-      setConversations(prevConversations => 
-        toggleTypingIndicator(prevConversations, conversationId, false)
-      );
-      
-      let updatedMessages = { ...messages };
-      const conversationMessages = updatedMessages[conversationId] || [];
-
-      // Generate reply based on conversation type
-      if (activeConvo.isGroup) {
-        // For group chats, simulate reply from random participant
-        const randomParticipant = activeConvo.participants[
-          Math.floor(Math.random() * activeConvo.participants.length)
-        ];
-        
-        const replyMsg: Message = {
-          id: generateMessageId(conversationMessages),
-          senderId: randomParticipant.id,
-          content: "J'ai bien reçu ton message...",
-          timestamp: getCurrentTime(),
-          status: 'delivered',
-          type: 'text'
-        };
-        
-        updatedMessages[conversationId] = [...conversationMessages, replyMsg];
-      } else {
-        // For direct messages, simulate a reply from the participant
-        const replyMsg: Message = {
-          id: generateMessageId(conversationMessages),
-          senderId: activeConvo.participants[0].id,
-          content: "Je viens de recevoir ton message...",
-          timestamp: getCurrentTime(),
-          status: 'delivered',
-          type: 'text'
-        };
-        
-        updatedMessages[conversationId] = [...conversationMessages, replyMsg];
-      }
-      
-      // Mark the user's message as read
-      // Use a new variable instead of reassigning the updatedMessages constant
-      const finalMessages = updateMessageStatus(
-        updatedMessages, 
-        conversationId, 
-        sentMessageId, 
-        'read'
-      );
-      
-      setMessages(finalMessages);
-    }, 3000);
-  };
-
-  // Update user profile
-  const updateUserProfile = (firstName?: string, lastName?: string, avatar?: string) => {
-    setUser(prevUser => {
-      const updates: Partial<CurrentUser> = {};
-      
-      if (firstName !== undefined) updates.firstName = firstName;
-      if (lastName !== undefined) updates.lastName = lastName;
-      
-      // Mettre à jour le nom complet si prénom ou nom ont changé
-      if (firstName !== undefined || lastName !== undefined) {
-        const newFirstName = firstName !== undefined ? firstName : prevUser.firstName;
-        const newLastName = lastName !== undefined ? lastName : prevUser.lastName;
-        updates.name = `${newFirstName} ${newLastName}`;
-      }
-      
-      if (avatar !== undefined) updates.avatar = avatar;
-      
-      return { ...prevUser, ...updates };
-    });
+    setMessages(prev => [...prev, newMessage]);
   };
 
   return {
-    searchQuery,
-    setSearchQuery,
-    activeConversation,
-    setActiveConversation,
-    conversations,
+    user: currentUser,
     messages,
-    handleSendMessage,
-    user,
-    updateUserProfile
+    conversations,
+    contacts,
+    selectedConversation,
+    conversationMessages,
+    isLoading,
+    selectConversation,
+    sendMessage,
+    updateUserProfile,
+    uploadProfileImage
   };
 };

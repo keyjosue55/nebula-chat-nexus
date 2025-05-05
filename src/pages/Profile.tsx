@@ -5,12 +5,14 @@ import { useForm } from "react-hook-form";
 import AppLayout from "@/components/layouts/AppLayout";
 import { useToast } from "@/components/ui/use-toast";
 import { useMessages } from "@/hooks/useMessages";
+import { useAuth } from "@/context/AuthContext"; // Import du contexte d'authentification
 
-// Importing the new components
+// Importing the components
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileInfo from "@/components/profile/ProfileInfo";
 import ProfileSettings from "@/components/profile/ProfileSettings";
 import EditProfileDialog from "@/components/profile/EditProfileDialog";
+import { uploadFile } from "@/services/storageService";
 
 interface ProfileFormValues {
   firstName: string;
@@ -24,7 +26,8 @@ const Profile = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user, updateUserProfile } = useMessages();
+  const { user, updateUserProfile, isLoading } = useMessages();
+  const { signOut } = useAuth(); // Utilisation de signOut du contexte d'authentification
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const form = useForm<ProfileFormValues>({
@@ -42,16 +45,23 @@ const Profile = () => {
     });
   }, [user, form]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     toast({
       title: "Déconnexion en cours...",
       variant: "default",
     });
     
-    // Simule une déconnexion avec délai
-    setTimeout(() => {
-      navigate("/auth");
-    }, 1500);
+    try {
+      // Utilise la fonction signOut de Supabase via notre contexte d'authentification
+      await signOut();
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      toast({
+        title: "Erreur lors de la déconnexion",
+        description: "Une erreur s'est produite. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleToggleSetting = (
@@ -85,32 +95,63 @@ const Profile = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        updateUserProfile(undefined, undefined, e.target.result as string);
-        toast({
-          title: "Photo de profil mise à jour",
-          variant: "default",
-        });
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Créer un bucket avatars s'il n'existe pas déjà
+      const publicUrl = await uploadFile('avatars', file, 'profiles');
+      
+      // Mettre à jour le profil utilisateur avec la nouvelle URL d'avatar
+      await updateUserProfile(undefined, undefined, publicUrl);
+      
+      toast({
+        title: "Photo de profil mise à jour",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour votre photo de profil",
+        variant: "destructive",
+      });
+    }
   };
 
-  const onSubmitProfile = (data: ProfileFormValues) => {
-    updateUserProfile(data.firstName, data.lastName);
-    setEditDialogOpen(false);
-    toast({
-      title: "Profil mis à jour",
-      description: "Vos informations ont été mises à jour avec succès",
-      variant: "default",
-    });
+  const onSubmitProfile = async (data: ProfileFormValues) => {
+    try {
+      await updateUserProfile(data.firstName, data.lastName);
+      setEditDialogOpen(false);
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été mises à jour avec succès",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Erreur:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour votre profil",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          <div className="animate-pulse flex space-x-2">
+            <div className="w-3 h-3 bg-neon-blue rounded-full"></div>
+            <div className="w-3 h-3 bg-neon-purple rounded-full"></div>
+            <div className="w-3 h-3 bg-neon-orange rounded-full"></div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
