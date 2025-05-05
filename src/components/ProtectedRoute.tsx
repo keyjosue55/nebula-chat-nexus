@@ -1,10 +1,18 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, session } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // If user becomes null after initial load (e.g., token expired)
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     // Afficher un indicateur de chargement pendant la vérification de l'authentification
@@ -20,7 +28,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   // Rediriger vers la page d'authentification si l'utilisateur n'est pas connecté
-  if (!user) {
+  if (!session) {
     return <Navigate to="/auth" replace />;
   }
 

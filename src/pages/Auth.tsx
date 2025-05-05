@@ -11,12 +11,13 @@ const Auth = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -31,60 +32,74 @@ const Auth = () => {
     
     try {
       if (isLogin) {
-        // Connexion
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
+        // For login, we'll use phone OTP without password
+        const { data, error } = await supabase.auth.signInWithOtp({
+          phone: formData.phone,
         });
 
         if (error) throw error;
 
         toast({
-          title: "Connexion réussie",
-          description: "Bienvenue dans SabaOngeya",
+          title: "Code de vérification envoyé",
+          description: "Veuillez vérifier votre téléphone pour le code",
           variant: "default",
         });
 
-        navigate('/messages');
+        setShowVerification(true);
       } else {
-        // Validation du formulaire d'inscription
-        if (formData.password !== formData.confirmPassword) {
-          toast({
-            title: "Erreur",
-            description: "Les mots de passe ne correspondent pas",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        
-        // Inscription
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
+        // For signup, we'll also use phone OTP
+        const { data, error } = await supabase.auth.signInWithOtp({
+          phone: formData.phone,
           options: {
-            data: {
-              first_name: formData.name.split(' ')[0] || '',
-              last_name: formData.name.split(' ').slice(1).join(' ') || '',
-            }
+            shouldCreateUser: true,
           }
         });
 
         if (error) throw error;
 
         toast({
-          title: "Inscription réussie",
-          description: "Veuillez vérifier votre email pour confirmer votre compte",
+          title: "Code de vérification envoyé",
+          description: "Veuillez vérifier votre téléphone pour le code",
           variant: "default",
         });
         
-        // Afficher le formulaire de connexion après l'inscription
-        setIsLogin(true);
+        setShowVerification(true);
       }
     } catch (error: any) {
       toast({
         title: "Erreur",
         description: error.message || "Une erreur est survenue",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formData.phone,
+        token: verificationCode,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: isLogin ? "Connexion réussie" : "Inscription réussie",
+        description: "Bienvenue dans SabaOngeya",
+        variant: "default",
+      });
+
+      navigate('/messages');
+    } catch (error: any) {
+      toast({
+        title: "Erreur de vérification",
+        description: error.message || "Code incorrect",
         variant: "destructive",
       });
     } finally {
@@ -107,83 +122,76 @@ const Auth = () => {
           {isLogin ? 'Connexion' : 'Créer un compte'}
         </h2>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
+        {!showVerification ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm text-gray-400 mb-1">Nom</label>
+              <label htmlFor="phone" className="block text-sm text-gray-400 mb-1">Numéro de téléphone</label>
               <Input
-                id="name"
-                name="name"
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="+33612345678"
+                required
+                className="bg-dark-light border-neon-blue/30 focus:border-neon-blue"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+              <p className="text-xs text-gray-500 mt-1">Format: +33612345678</p>
+            </div>
+            
+            <Button
+              type="submit"
+              className="w-full cyber-button"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <span className="animate-pulse">Chargement...</span>
+                </span>
+              ) : (
+                isLogin ? 'Recevoir le code' : 'S\'inscrire'
+              )}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={verifyOTP} className="space-y-4">
+            <div>
+              <label htmlFor="verificationCode" className="block text-sm text-gray-400 mb-1">Code de vérification</label>
+              <Input
+                id="verificationCode"
+                name="verificationCode"
                 type="text"
-                required={!isLogin}
+                required
                 className="bg-dark-light border-neon-blue/30 focus:border-neon-blue"
-                value={formData.name}
-                onChange={handleChange}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
               />
             </div>
-          )}
-          
-          <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              required
-              className="bg-dark-light border-neon-blue/30 focus:border-neon-blue"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">Mot de passe</label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="bg-dark-light border-neon-blue/30 focus:border-neon-blue"
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-          
-          {!isLogin && (
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm text-gray-400 mb-1">Confirmer le mot de passe</label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required={!isLogin}
-                className="bg-dark-light border-neon-blue/30 focus:border-neon-blue"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-          )}
-          
-          <Button
-            type="submit"
-            className="w-full cyber-button"
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <span className="animate-pulse">Chargement...</span>
-              </span>
-            ) : (
-              isLogin ? 'Se connecter' : 'S\'inscrire'
-            )}
-          </Button>
-        </form>
+            
+            <Button
+              type="submit"
+              className="w-full cyber-button"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <span className="animate-pulse">Vérification...</span>
+                </span>
+              ) : (
+                'Vérifier le code'
+              )}
+            </Button>
+          </form>
+        )}
         
         <div className="mt-6 text-center">
           <button
             type="button"
             className="text-neon-blue hover:underline text-sm"
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setShowVerification(false);
+            }}
           >
             {isLogin ? 'Créer un compte' : 'J\'ai déjà un compte'}
           </button>

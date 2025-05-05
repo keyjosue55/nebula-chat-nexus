@@ -1,32 +1,20 @@
 
--- Creating avatars storage bucket
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('avatars', 'avatars', true);
+-- Create storage bucket for avatars
+create bucket if not exists avatars;
 
--- Allow public read access to the avatars bucket
-CREATE POLICY "Public Access to Avatars" 
-ON storage.objects 
-FOR SELECT 
-TO public 
-USING (bucket_id = 'avatars');
+-- Set RLS policies for the avatars bucket
+-- Allow authenticated users to upload their own avatar
+create policy "Users can upload their own avatar"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'avatars' 
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
 
--- Allow authenticated users to upload avatars
-CREATE POLICY "Avatar Upload Policy"
-ON storage.objects
-FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'avatars');
+-- Allow anyone to read avatars
+create policy "Anyone can read avatars" 
+on storage.objects for select
+using (bucket_id = 'avatars');
 
--- Allow users to update their own avatars
-CREATE POLICY "Avatar Update Policy"
-ON storage.objects
-FOR UPDATE
-TO authenticated
-USING (bucket_id = 'avatars');
-
--- Allow users to delete their own avatars
-CREATE POLICY "Avatar Delete Policy"
-ON storage.objects
-FOR DELETE
-TO authenticated
-USING (bucket_id = 'avatars');
+-- Enable Row Level Security
+alter bucket avatars enable row level security;

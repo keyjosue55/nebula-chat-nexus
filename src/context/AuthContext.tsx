@@ -28,18 +28,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        console.log('Auth state changed:', event);
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setLoading(false);
 
         if (event === 'SIGNED_OUT') {
           navigate('/auth');
+        } else if (event === 'SIGNED_IN') {
+          navigate('/messages');
         }
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Current session:', currentSession);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);

@@ -8,7 +8,7 @@ import { demoMessages, demoConversations } from '@/data/demoMessages';
 export const useMessages = () => {
   const { user } = useAuth();
   const [currentUser, setCurrentUser] = useState<CurrentUser>({
-    id: 0, // Changed from string to number to match the type
+    id: 0, // Using 0 for current user to match the demo data structure
     name: "",
     firstName: "",
     lastName: "",
